@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Label="Globals">
+    <SccProjectName>SAK</SccProjectName>
+    <SccProvider>SAK</SccProvider>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccLocalPath>SAK</SccLocalPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFrameworks>net452;netstandard1.5</TargetFrameworks>
+    <Description>Enables you to define your application initialization workflow just like in ASP.NET Core</Description>
+    <Authors>Ivan Prodanov</Authors>
+    <Company>Ivan Prodanov</Company>
+    <Product />
+    <Copyright>Ivan Prodanov</Copyright>
+    <PackageIconUrl>http://go.microsoft.com/fwlink/?LinkID=288859</PackageIconUrl>
+    <PackageLicenseUrl>http://unlicense.org/UNLICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/ivan-prodanov/DotNet.Startup/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ivan-prodanov/DotNet.Startup/</RepositoryUrl>
+    <RepositoryType>GitHub</RepositoryType>
+    <PackageTags>DotNet</PackageTags>
+    <PackageReleaseNotes>Initial Release</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <Import Project="..\..\Reflection\DevOps.Reflection\DevOps.Reflection.projitems" Label="Shared" />
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="1.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="1.1.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="1.1.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.3.0" />
+  </ItemGroup>
+
+</Project>
