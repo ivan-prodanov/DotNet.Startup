@@ -62,7 +62,18 @@ namespace DotNet.Startup
             return startupType;
         }
 
-        private Action GetConfigureServicedDelegate(object instance, IServiceCollection serviceCollection)
+        private Func<IServiceCollection> GetConfigureServicesdDelegateAsFunc(object instance, IServiceCollection serviceCollection)
+        {
+            if (MethodLoader.TryGetMethodInfo<IServiceCollection>(instance.GetType(), $"Configure{_environment.EnvironmentName}Services", out var configureServicesMethod))
+            {
+                return MethodLoader.GetMethod<IServiceCollection>(instance, $"Configure{_environment.EnvironmentName}Services", serviceCollection);
+            }
+            else
+            {
+                return MethodLoader.GetMethod<IServiceCollection>(instance, nameof(IStartup.ConfigureServices), serviceCollection);
+            }
+        }
+        private Action GetConfigureServicesdDelegateAsAction(object instance, IServiceCollection serviceCollection)
         {
             if (MethodLoader.TryGetMethodInfo<IServiceCollection>(instance.GetType(), $"Configure{_environment.EnvironmentName}Services", out var configureServicesMethod))
             {
@@ -74,9 +85,20 @@ namespace DotNet.Startup
             }
         }
 
+        private Action GetConfigureServicesdDelegate(object instance, IServiceCollection serviceCollection)
+        {
+            var funcDelegate = GetConfigureServicesdDelegateAsFunc(instance, serviceCollection);
+            if (funcDelegate != null)
+            {
+                return () => { funcDelegate(); };
+            }
+
+            return GetConfigureServicesdDelegateAsAction(instance, serviceCollection);
+        }
+
         private (IStartup startup, IServiceProvider provider) GetConventionalStartup(object instance, IServiceCollection serviceCollection)
         {
-            var configureServicesMethod = GetConfigureServicedDelegate(instance, serviceCollection);
+            var configureServicesMethod = GetConfigureServicesdDelegate(instance, serviceCollection);
 
             var startup = new ConventionBasedStartup(instance)
             {
