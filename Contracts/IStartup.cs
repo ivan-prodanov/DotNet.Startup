@@ -1,4 +1,4 @@
-﻿using DotNet.Startup.Contracts;
+using DotNet.Startup.Contracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
