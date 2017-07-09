@@ -1,12 +1,9 @@
-﻿using DotNet.Startup.Contracts;
-using DevOps.Reflection;
-using Microsoft.Extensions.Configuration;
+using DotNet.Startup.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace DotNet.Startup
 {
@@ -36,27 +33,27 @@ namespace DotNet.Startup
             }
         }
 
-        private Type GetStartupType()
+        private Type GetStartupType(Assembly assembly)
         {
             bool IsAConventionBasedStartupClass(Type t)
             {
-                return t.Name == "Startup"
+                return t.Name.StartsWith("Startup")
                     && !t.GetTypeInfo().IsAbstract
-                    && MethodLoader.TryGetMethodInfo<Action<IServiceCollection>>(t, nameof(IStartup.ConfigureServices), out var @delegate);
+                    && MethodLoader.TryGetMethodInfo<IServiceCollection>(t, nameof(IStartup.ConfigureServices), out var @delegate);
             }
-            
-            var startupTypes = Assembly.GetEntryAssembly()
+
+            var startupTypes = assembly?
                     .GetTypes()
                     .Where(t => t.GetTypeInfo().BaseType == typeof(IStartup) || IsAConventionBasedStartupClass(t))
                     .ToList();
 
             if (!startupTypes.Any())
             {
-                throw new InvalidOperationException("There is more than one Startup class.");
+                throw new InvalidOperationException("There is no Startup class");
             }
 
             var startupType = startupTypes
-                .Where(st => st.Name == $"Startup.{_environment.EnvironmentName}")
+                .Where(st => st.Name == $"Startup_{_environment.EnvironmentName}")
                 .FirstOrDefault() ??
             startupTypes
                 .Where(st => st.Name == "Startup")
@@ -65,14 +62,25 @@ namespace DotNet.Startup
             return startupType;
         }
 
-        private (IStartup startup,  IServiceProvider provider) GetConventionalStartup(object instance, IServiceCollection serviceCollection)
+        private Action GetConfigureServicedDelegate(object instance, IServiceCollection serviceCollection)
         {
-            var configureServicesMethod = MethodLoader.GetMethod(instance, nameof(IStartup.ConfigureServices), serviceCollection);
+            if (MethodLoader.TryGetMethodInfo<IServiceCollection>(instance.GetType(), $"Configure{_environment.EnvironmentName}Services", out var configureServicesMethod))
+            {
+                return MethodLoader.GetMethod(instance, $"Configure{_environment.EnvironmentName}Services", serviceCollection);
+            }
+            else
+            {
+                return MethodLoader.GetMethod(instance, nameof(IStartup.ConfigureServices), serviceCollection);
+            }
+        }
+
+        private (IStartup startup, IServiceProvider provider) GetConventionalStartup(object instance, IServiceCollection serviceCollection)
+        {
+            var configureServicesMethod = GetConfigureServicedDelegate(instance, serviceCollection);
 
             var startup = new ConventionBasedStartup(instance)
             {
-                ConfigurationCallBack = configureServicesMethod,
-                //Configuration = _configurationBuilder.Build()
+                ConfigurationCallBack = configureServicesMethod
             };
 
             startup.ConfigureServices(serviceCollection);
@@ -98,10 +106,10 @@ namespace DotNet.Startup
             return (startup, serviceCollection.BuildServiceProvider());
         }
 
-        public void Run()
+        public void Run(Assembly assembly)
         {
-            var startupType = GetStartupType();
-            
+            var startupType = GetStartupType(assembly);
+
             var serviceCollection = new ServiceCollection();
             object instance = CreateInstance(startupType);
 
@@ -110,6 +118,11 @@ namespace DotNet.Startup
             _app.ApplicationServices = startupInfo.provider;
 
             startupInfo.startup.Run(_app, _environment);
+        }
+
+        public void Run()
+        {
+            Run(Assembly.GetEntryAssembly());
         }
     }
 }
