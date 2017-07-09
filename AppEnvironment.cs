@@ -1,9 +1,5 @@
-﻿using DotNet.Startup.Contracts;
-using System;
+using DotNet.Startup.Contracts;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DotNet.Startup
 {
